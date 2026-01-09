@@ -91,7 +91,7 @@ const Habits = () => {
     try {
       const newState = !dateCheckins[habitId];
       const response = await fetch(
-        `http://localhost:5000/api/habits/${habitId}/checkins`,
+        `https://habit-tracker-v75t.onrender.com/api/habits/${habit.id}/checkins`,
         {
           method: 'POST',
           headers: {
