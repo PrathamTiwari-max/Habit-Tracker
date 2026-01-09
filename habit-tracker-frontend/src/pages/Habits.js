@@ -10,7 +10,10 @@ const Habits = () => {
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [hoveredDate, setHoveredDate] = useState(null);
-  const [newHabit, setNewHabit] = useState({ name: '', description: '' });
+  const [newHabit, setNewHabit] = useState({
+    name: '',
+    description: ''
+  });
   const [dateCheckins, setDateCheckins] = useState({});
 
   useEffect(() => {
@@ -42,6 +45,7 @@ const Habits = () => {
           checkinsMap[habit.id] = [];
         }
       }
+
       setAllCheckins(checkinsMap);
     } catch (error) {
       console.error('Error loading habits:', error);
@@ -91,7 +95,7 @@ const Habits = () => {
     try {
       const newState = !dateCheckins[habitId];
       const response = await fetch(
-        `https://habit-tracker-v75t.onrender.com/api/habits/${habit.id}/checkins`,
+        `https://habit-tracker-v75t.onrender.com/api/habits/${habitId}/checkins`,
         {
           method: 'POST',
           headers: {
@@ -104,6 +108,7 @@ const Habits = () => {
           })
         }
       );
+
       await response.json();
 
       setDateCheckins(prev => ({
@@ -125,6 +130,7 @@ const Habits = () => {
             habit_id: habitId
           });
         }
+
         updated[habitId] = habitCheckins;
         return updated;
       });
@@ -139,6 +145,7 @@ const Habits = () => {
     const days = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
     for (let i = 89; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -164,6 +171,7 @@ const Habits = () => {
   days.forEach(day => {
     const weekStart = getWeekStartDate(new Date(day));
     const weekKey = weekStart.toISOString().split('T')[0];
+
     if (!weekMap[weekKey]) {
       weekMap[weekKey] = [];
     }
@@ -192,6 +200,7 @@ const Habits = () => {
         completed++;
       }
     });
+
     return Math.round((completed / habits.length) * 100);
   };
 
@@ -226,26 +235,22 @@ const Habits = () => {
     return (
       <div style={styles.container}>
         <div style={styles.skeletonContainer}>
-          <div style={styles.skeletonTitle} />
-          <div style={styles.skeletonHeatmap} />
+          <div style={styles.skeletonCard} />
+          <div style={styles.skeletonCard} />
         </div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      style={styles.container}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
+    <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>Habits</h1>
+        <h1 style={styles.title}>My Habits</h1>
         <motion.button
-          whileTap={{ scale: 0.96 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowModal(true)}
-          style={styles.addButton}
+          style={styles.newButton}
         >
           + New Habit
         </motion.button>
@@ -254,84 +259,107 @@ const Habits = () => {
       {habits.length === 0 ? (
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>✓</div>
-          <h3 style={styles.emptyTitle}>No habits yet</h3>
           <p style={styles.emptyText}>Create your first habit to start tracking!</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowModal(true)}
+            style={styles.createButton}
+          >
+            Create Habit
+          </motion.button>
         </div>
       ) : (
         <>
-          <div style={styles.heatmapSection}>
-            <h2 style={styles.sectionTitle}>Activity Heatmap (Last 90 Days)</h2>
-            <div style={styles.heatmapContainer}>
-              <div style={styles.weekLabels}>
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} style={styles.weekLabel}>{day}</div>
-                ))}
-              </div>
-              <div style={styles.heatmap}>
-                {weeks.map((week, weekIdx) => (
-                  <div key={weekIdx} style={styles.week}>
-                    {week.map((date, dayIdx) => {
-                      const level = date ? getCompletionLevel(date) : 0;
-                      const color = date ? getColor(level) : 'transparent';
-                      return (
-                        <motion.div
-                          key={dayIdx}
-                          style={{
-                            ...styles.day,
-                            backgroundColor: color,
-                            cursor: date ? 'pointer' : 'default'
-                          }}
-                          whileHover={date ? { scale: 1.2 } : {}}
-                          onClick={() => date && handleDateClick(date)}
-                          onMouseEnter={() => date && setHoveredDate(date)}
-                          onMouseLeave={() => setHoveredDate(null)}
-                        >
-                          {hoveredDate && date && 
-                           hoveredDate.toISOString() === date.toISOString() && (
-                            <div style={styles.tooltip}>
-                              <div style={styles.tooltipDate}>{formatDate(date)}</div>
-                              <div style={styles.tooltipLevel}>{level}% complete</div>
-                            </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Habits List */}
+          <div style={styles.habitsList}>
+            {habits.map(habit => (
+              <motion.div
+                key={habit.id}
+                style={styles.habitCard}
+                whileHover={{ y: -4, boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div>
+                  <h3 style={styles.habitName}>{habit.name}</h3>
+                  {habit.description && (
+                    <p style={styles.habitDesc}>{habit.description}</p>
+                  )}
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleDelete(habit.id)}
+                  style={styles.deleteButton}
+                >
+                  Delete
+                </motion.button>
+              </motion.div>
+            ))}
           </div>
 
-          <div style={styles.habitsSection}>
-            <h2 style={styles.sectionTitle}>Your Habits</h2>
-            <div style={styles.habitsList}>
-              {habits.map(habit => (
-                <motion.div
-                  key={habit.id}
-                  style={styles.habitCard}
-                  whileHover={{ y: -4, boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)' }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div>
-                    <h3 style={styles.habitName}>{habit.name}</h3>
-                    {habit.description && (
-                      <p style={styles.habitDesc}>{habit.description}</p>
-                    )}
-                  </div>
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => handleDelete(habit.id)}
-                    style={styles.deleteButton}
-                  >
-                    Delete
-                  </motion.button>
-                </motion.div>
-              ))}
+          {/* Activity Heatmap */}
+          <motion.div
+            style={styles.heatmapCard}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 style={styles.heatmapTitle}>Activity Heatmap</h2>
+            <div style={styles.heatmapContainer}>
+              <div style={styles.heatmapWrapper}>
+                <div style={styles.dayLabels}>
+                  <div style={styles.dayLabel}>Sun</div>
+                  <div style={styles.dayLabel}>Mon</div>
+                  <div style={styles.dayLabel}>Tue</div>
+                  <div style={styles.dayLabel}>Wed</div>
+                  <div style={styles.dayLabel}>Thu</div>
+                  <div style={styles.dayLabel}>Fri</div>
+                  <div style={styles.dayLabel}>Sat</div>
+                </div>
+                <div style={styles.heatmapGrid}>
+                  {weeks.map((week, weekIndex) => (
+                    <div key={weekIndex} style={styles.week}>
+                      {week.map((day, dayIndex) => (
+                        <motion.div
+                          key={dayIndex}
+                          onClick={() => day && handleDateClick(day)}
+                          onMouseEnter={() => day && setHoveredDate(day)}
+                          onMouseLeave={() => setHoveredDate(null)}
+                          whileHover={day ? { scale: 1.2 } : {}}
+                          style={{
+                            ...styles.day,
+                            backgroundColor: day ? getColor(getCompletionLevel(day)) : 'transparent',
+                            cursor: day ? 'pointer' : 'default'
+                          }}
+                          title={day ? formatDate(day) : ''}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+
+            <div style={styles.legend}>
+              <span style={styles.legendText}>Less</span>
+              {[0, 25, 50, 75, 100].map(level => (
+                <div
+                  key={level}
+                  style={{
+                    ...styles.legendBox,
+                    backgroundColor: getColor(level)
+                  }}
+                />
+              ))}
+              <span style={styles.legendText}>More</span>
+            </div>
+          </motion.div>
         </>
       )}
 
+      {/* New Habit Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -349,9 +377,9 @@ const Habits = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 style={styles.modalTitle}>Create New Habit</h2>
-              <form onSubmit={handleSubmit} style={styles.form}>
+              <form onSubmit={handleSubmit}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Habit Name</label>
+                  <label style={styles.label}>Name</label>
                   <input
                     type="text"
                     value={newHabit.name}
@@ -361,28 +389,31 @@ const Habits = () => {
                   />
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Description (Optional)</label>
+                  <label style={styles.label}>Description</label>
                   <textarea
                     value={newHabit.description}
                     onChange={(e) => setNewHabit({ ...newHabit, description: e.target.value })}
-                    style={{ ...styles.input, ...styles.textarea }}
+                    style={styles.textarea}
                     rows="3"
                   />
                 </div>
-                <div style={styles.modalActions}>
-                  <button
+                <div style={styles.modalButtons}>
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={styles.submitButton}
+                  >
+                    Create
+                  </motion.button>
+                  <motion.button
                     type="button"
                     onClick={() => setShowModal(false)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     style={styles.cancelButton}
                   >
                     Cancel
-                  </button>
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    type="submit"
-                    style={styles.submitButton}
-                  >
-                    Create Habit
                   </motion.button>
                 </div>
               </form>
@@ -391,6 +422,7 @@ const Habits = () => {
         )}
       </AnimatePresence>
 
+      {/* Date Checkins Modal */}
       <AnimatePresence>
         {showDateModal && (
           <motion.div
@@ -408,29 +440,29 @@ const Habits = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <h2 style={styles.modalTitle}>
-                {formatFullDate(new Date(selectedDate + 'T00:00:00'))}
+                {formatFullDate(new Date(selectedDate))}
               </h2>
               <div style={styles.habitCheckList}>
                 {habits.map(habit => (
-                  <motion.div
-                    key={habit.id}
-                    style={styles.habitCheckItem}
-                    whileHover={{ backgroundColor: 'rgba(102, 126, 234, 0.05)' }}
-                  >
-                    <label style={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={dateCheckins[habit.id] || false}
-                        onChange={() => handleHabitToggle(habit.id)}
-                        style={styles.checkbox}
-                      />
-                      <span style={styles.habitCheckName}>{habit.name}</span>
-                    </label>
-                  </motion.div>
+                  <div key={habit.id} style={styles.habitCheckItem}>
+                    <span style={styles.habitCheckName}>{habit.name}</span>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleHabitToggle(habit.id)}
+                      style={{
+                        ...styles.checkButton,
+                        backgroundColor: dateCheckins[habit.id] ? '#22c55e' : '#e5e7eb'
+                      }}
+                    >
+                      {dateCheckins[habit.id] ? '✓ Done' : 'Mark Done'}
+                    </motion.button>
+                  </div>
                 ))}
               </div>
               <motion.button
-                whileTap={{ scale: 0.96 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowDateModal(false)}
                 style={styles.closeButton}
               >
@@ -440,7 +472,7 @@ const Habits = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 
@@ -454,7 +486,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '3.5rem',
+    marginBottom: '3rem',
   },
   title: {
     color: '#e6edf3',
@@ -463,7 +495,7 @@ const styles = {
     letterSpacing: '-0.02em',
     margin: 0,
   },
-  addButton: {
+  newButton: {
     background: '#667eea',
     color: '#ffffff',
     border: 'none',
@@ -472,117 +504,135 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
-  },
-  sectionTitle: {
-    color: 'rgba(230, 237, 243, 0.95)',
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '1.5rem',
-    letterSpacing: '-0.01em',
-  },
-  heatmapSection: {
-    marginBottom: '5rem',
-  },
-  heatmapContainer: {
-    background: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: '12px',
-    padding: '2rem',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-  },
-  weekLabels: {
-    display: 'flex',
-    marginBottom: '0.5rem',
-    paddingLeft: '0',
-  },
-  weekLabel: {
-    width: '20px',
-    fontSize: '0.75rem',
-    color: 'rgba(230, 237, 243, 0.6)',
-    textAlign: 'center',
-    marginRight: '4px',
-  },
-  heatmap: {
-    display: 'flex',
-    gap: '4px',
-  },
-  week: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px',
-  },
-  day: {
-    width: '20px',
-    height: '20px',
-    borderRadius: '4px',
-    position: 'relative',
-    transition: 'transform 0.2s ease',
-  },
-  tooltip: {
-    position: 'absolute',
-    bottom: '100%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: 'rgba(10, 10, 15, 0.95)',
-    color: '#ffffff',
-    padding: '0.5rem 0.75rem',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    whiteSpace: 'nowrap',
-    marginBottom: '8px',
-    pointerEvents: 'none',
-    zIndex: 1000,
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-  },
-  tooltipDate: {
-    fontWeight: '600',
-    marginBottom: '2px',
-  },
-  tooltipLevel: {
-    color: 'rgba(230, 237, 243, 0.8)',
-  },
-  habitsSection: {
-    marginBottom: '3rem',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
   },
   habitsList: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gap: '1.5rem',
+    marginBottom: '3rem',
   },
   habitCard: {
     background: '#ffffff',
     borderRadius: '12px',
-    padding: '1.5rem',
+    padding: '2rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)',
-    border: '1px solid rgba(0, 0, 0, 0.04)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   },
   habitName: {
     color: '#0d1117',
-    fontSize: '1.2rem',
+    fontSize: '1.3rem',
     fontWeight: '600',
+    margin: 0,
     marginBottom: '0.5rem',
-    lineHeight: '1.3',
   },
   habitDesc: {
     color: '#57606a',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
+    margin: 0,
   },
   deleteButton: {
-    background: '#cf222e',
+    background: '#dc2626',
     color: '#ffffff',
     border: 'none',
-    padding: '0.5rem 1rem',
+    padding: '0.5rem 1.25rem',
     borderRadius: '6px',
     fontSize: '0.9rem',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 4px rgba(207, 34, 46, 0.2)',
+  },
+  heatmapCard: {
+    background: '#ffffff',
+    borderRadius: '12px',
+    padding: '2rem',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+  },
+  heatmapTitle: {
+    color: '#0d1117',
+    fontSize: '1.3rem',
+    fontWeight: '600',
+    marginBottom: '1.5rem',
+  },
+  heatmapContainer: {
+    overflowX: 'auto',
+  },
+  heatmapWrapper: {
+    display: 'flex',
+    gap: '0.5rem',
+    minWidth: 'fit-content',
+  },
+  dayLabels: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+    justifyContent: 'space-around',
+    paddingRight: '0.5rem',
+  },
+  dayLabel: {
+    color: '#57606a',
+    fontSize: '0.75rem',
+    height: '14px',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  heatmapGrid: {
+    display: 'flex',
+    gap: '0.25rem',
+  },
+  week: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+  },
+  day: {
+    width: '14px',
+    height: '14px',
+    borderRadius: '2px',
+  },
+  legend: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginTop: '1.5rem',
+  },
+  legendText: {
+    color: '#57606a',
+    fontSize: '0.85rem',
+  },
+  legendBox: {
+    width: '14px',
+    height: '14px',
+    borderRadius: '2px',
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '4rem 2rem',
+    background: '#ffffff',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+  },
+  emptyIcon: {
+    fontSize: '4rem',
+    marginBottom: '1rem',
+    opacity: 0.3,
+  },
+  emptyText: {
+    color: '#57606a',
+    fontSize: '1.1rem',
+    marginBottom: '2rem',
+  },
+  createButton: {
+    background: '#667eea',
+    color: '#ffffff',
+    border: 'none',
+    padding: '1rem 2rem',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
   },
   modalOverlay: {
     position: 'fixed',
@@ -590,12 +640,11 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
+    background: 'rgba(0, 0, 0, 0.5)',
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1000,
-    backdropFilter: 'blur(4px)',
   },
   modal: {
     background: '#ffffff',
@@ -603,145 +652,115 @@ const styles = {
     padding: '2rem',
     maxWidth: '500px',
     width: '90%',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    maxHeight: '90vh',
+    overflowY: 'auto',
   },
   modalTitle: {
     color: '#0d1117',
-    fontSize: '1.5rem',
-    fontWeight: '600',
+    fontSize: '1.8rem',
+    fontWeight: '700',
     marginBottom: '1.5rem',
   },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
   formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
+    marginBottom: '1.5rem',
   },
   label: {
+    display: 'block',
     color: '#0d1117',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
+    marginBottom: '0.5rem',
   },
   input: {
+    width: '100%',
     padding: '0.75rem',
+    border: '2px solid #e5e7eb',
     borderRadius: '6px',
-    border: '1px solid #d0d7de',
     fontSize: '1rem',
     outline: 'none',
-    transition: 'border-color 0.2s ease',
+    transition: 'border-color 0.2s',
   },
   textarea: {
+    width: '100%',
+    padding: '0.75rem',
+    border: '2px solid #e5e7eb',
+    borderRadius: '6px',
+    fontSize: '1rem',
+    outline: 'none',
     resize: 'vertical',
     fontFamily: 'inherit',
   },
-  modalActions: {
+  modalButtons: {
     display: 'flex',
     gap: '1rem',
-    justifyContent: 'flex-end',
-    marginTop: '1rem',
-  },
-  cancelButton: {
-    background: '#f6f8fa',
-    color: '#0d1117',
-    border: '1px solid #d0d7de',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
   },
   submitButton: {
+    flex: 1,
     background: '#667eea',
     color: '#ffffff',
     border: 'none',
-    padding: '0.75rem 1.5rem',
+    padding: '0.75rem',
     borderRadius: '6px',
     fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
   },
-  closeButton: {
-    background: '#667eea',
-    color: '#ffffff',
+  cancelButton: {
+    flex: 1,
+    background: '#e5e7eb',
+    color: '#0d1117',
     border: 'none',
-    padding: '0.75rem 1.5rem',
+    padding: '0.75rem',
     borderRadius: '6px',
     fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
-    width: '100%',
-    marginTop: '1rem',
-    boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
   },
   habitCheckList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem',
-    marginTop: '1rem',
+    gap: '1rem',
+    marginBottom: '1.5rem',
   },
   habitCheckItem: {
-    padding: '0.75rem',
-    borderRadius: '6px',
-    transition: 'background-color 0.2s ease',
-  },
-  checkboxLabel: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '0.75rem',
-    cursor: 'pointer',
-  },
-  checkbox: {
-    width: '20px',
-    height: '20px',
-    cursor: 'pointer',
+    padding: '1rem',
+    background: '#f9fafb',
+    borderRadius: '8px',
   },
   habitCheckName: {
     color: '#0d1117',
     fontSize: '1rem',
-    fontWeight: '500',
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '4rem 2rem',
-    background: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: '12px',
-    border: '1px dashed rgba(255, 255, 255, 0.1)',
-  },
-  emptyIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem',
-    opacity: 0.3,
-  },
-  emptyTitle: {
-    color: '#e6edf3',
-    fontSize: '1.2rem',
     fontWeight: '600',
-    marginBottom: '0.5rem',
   },
-  emptyText: {
-    color: 'rgba(139, 148, 158, 0.8)',
-    fontSize: '0.95rem',
+  checkButton: {
+    border: 'none',
+    padding: '0.5rem 1.25rem',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    color: '#ffffff',
+  },
+  closeButton: {
+    width: '100%',
+    background: '#e5e7eb',
+    color: '#0d1117',
+    border: 'none',
+    padding: '0.75rem',
+    borderRadius: '6px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
   },
   skeletonContainer: {
-    width: '100%',
+    display: 'grid',
+    gap: '1.5rem',
   },
-  skeletonTitle: {
-    height: '40px',
-    width: '200px',
-    background: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: '8px',
-    marginBottom: '3rem',
-    animation: 'pulse 1.5s ease-in-out infinite',
-  },
-  skeletonHeatmap: {
-    height: '300px',
+  skeletonCard: {
+    height: '200px',
     background: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '12px',
     animation: 'pulse 1.5s ease-in-out infinite',
