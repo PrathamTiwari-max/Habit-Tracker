@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
+
 const Dashboard = () => {
   const [stats, setStats] = useState({
     habits: [],
@@ -9,14 +10,16 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     loadStats();
   }, []);
 
+
   const loadStats = async () => {
     try {
       setLoading(true);
-      fetch('https://habit-tracker-v75t.onrender.com/api/stats/dashboard', {
+      const response = await fetch('https://habit-tracker-v75t.onrender.com/api/stats/dashboard', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -47,11 +50,12 @@ const Dashboard = () => {
     }
   };
 
+
   const handleHabitDone = async (habitId) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const response = await fetch(
-        `http://localhost:5000/api/habits/${habitId}/checkins`,
+        `https://habit-tracker-v75t.onrender.com/api/habits/${habitId}/checkins`,
         {
           method: 'POST',
           headers: {
@@ -65,6 +69,7 @@ const Dashboard = () => {
         }
       );
 
+
       if (response.ok) {
         console.log('Habit checked in successfully');
         loadStats();
@@ -74,11 +79,13 @@ const Dashboard = () => {
     }
   };
 
+
   const getUniqueMuscleStats = () => {
     // SAFETY CHECK - return empty array if no data
     if (!stats.muscle_group_stats || !Array.isArray(stats.muscle_group_stats)) {
       return [];
     }
+
 
     const grouped = {};
     stats.muscle_group_stats.forEach(stat => {
@@ -98,6 +105,7 @@ const Dashboard = () => {
     return Object.values(grouped);
   };
 
+
   if (loading) {
     return (
       <div style={styles.container}>
@@ -110,7 +118,9 @@ const Dashboard = () => {
     );
   }
 
+
   const uniqueMuscleStats = getUniqueMuscleStats();
+
 
   return (
     <motion.div
@@ -120,6 +130,7 @@ const Dashboard = () => {
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <h1 style={styles.title}>Dashboard</h1>
+
 
       <div style={styles.grid}>
         {/* Today's Habits */}
@@ -170,6 +181,7 @@ const Dashboard = () => {
           )}
         </motion.div>
 
+
         {/* Recent Workouts */}
         <motion.div
           style={styles.card}
@@ -180,6 +192,7 @@ const Dashboard = () => {
             <h2 style={styles.cardTitle}>Recent Workouts</h2>
             <span style={styles.badge}>{stats.recent_workouts.length}</span>
           </div>
+
 
           {stats.recent_workouts.length === 0 ? (
             <div style={styles.emptyState}>
@@ -217,6 +230,7 @@ const Dashboard = () => {
           )}
         </motion.div>
 
+
         {/* Muscle Group Stats */}
         <motion.div
           style={styles.card}
@@ -226,6 +240,7 @@ const Dashboard = () => {
           <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>Muscle Groups (30 Days)</h2>
           </div>
+
 
           {uniqueMuscleStats.length === 0 ? (
             <div style={styles.emptyState}>
@@ -258,6 +273,7 @@ const Dashboard = () => {
     </motion.div>
   );
 };
+
 
 const styles = {
   container: {
@@ -444,5 +460,6 @@ const styles = {
     animation: 'pulse 1.5s ease-in-out infinite',
   },
 };
+
 
 export default Dashboard;
