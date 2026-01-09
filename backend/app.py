@@ -4,11 +4,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from datetime import datetime, date, timedelta
 import os
 
-
-
 app = Flask(__name__)
-
-
 
 # ===== CRITICAL JWT Configuration =====
 app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
@@ -19,8 +15,6 @@ app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
-
-
 
 # ===== Database Configuration (ONLY CHANGE) =====
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
@@ -34,56 +28,41 @@ if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-
 # ===== CORS Configuration for Multiple Devices =====
-CORS(app, 
-     origins=["http://localhost:3000", 
-              "http://localhost:5173",
-              "http://10.148.140.21:3000",
-              "http://10.148.140.21:5173",
-              "http://127.0.0.1:3000"],
-     supports_credentials=True,
-     allow_headers=['Content-Type', 'Authorization'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+CORS(app,
+    origins=["http://localhost:3000",
+             "http://localhost:5173",
+             "http://10.148.140.21:3000",
+             "http://10.148.140.21:5173",
+             "http://127.0.0.1:3000",
+             "https://habit-tracker-1-whp5.onrender.com"],
+    supports_credentials=True,
+    allow_headers=['Content-Type', 'Authorization'],
+    methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 )
 
-
-
 from models import db, User, Habit, HabitCheckIn, Workout
+
 db.init_app(app)
 jwt = JWTManager(app)
-
-
 
 # JWT error handlers
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
     return jsonify({'error': 'Invalid token', 'message': str(error)}), 422
 
-
-
 @jwt.unauthorized_loader
 def unauthorized_callback(error):
     return jsonify({'error': 'Missing authorization header'}), 401
-
-
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):
     return jsonify({'error': 'Token expired'}), 401
 
-
-
 with app.app_context():
     db.create_all()
 
-
-
 # ============= AUTH ROUTES =============
-
-
-
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -99,7 +78,6 @@ def register():
     
     user = User(username=data['username'], email=data['email'])
     user.set_password(data['password'])
-    
     db.session.add(user)
     db.session.commit()
     
@@ -111,8 +89,6 @@ def register():
         'access_token': access_token,
         'user': user.to_dict()
     }), 201
-
-
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -135,8 +111,6 @@ def login():
         'user': user.to_dict()
     }), 200
 
-
-
 @app.route('/api/auth/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -148,12 +122,7 @@ def get_current_user():
     
     return jsonify({'user': user.to_dict()}), 200
 
-
-
 # ============= HABITS ROUTES =============
-
-
-
 @app.route('/api/habits', methods=['GET', 'POST'])
 @jwt_required()
 def habits():
@@ -180,8 +149,6 @@ def habits():
         
         return jsonify({'message': 'Habit created', 'habit': habit.to_dict()}), 201
 
-
-
 @app.route('/api/habits/<int:habit_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def habit_detail(habit_id):
@@ -206,12 +173,7 @@ def habit_detail(habit_id):
         db.session.commit()
         return jsonify({'message': 'Habit deleted'}), 200
 
-
-
 # ============= HABIT CHECK-INS =============
-
-
-
 @app.route('/api/habits/<int:habit_id>/checkins', methods=['GET', 'POST'])
 @jwt_required()
 def habit_checkins(habit_id):
@@ -247,12 +209,7 @@ def habit_checkins(habit_id):
         
         return jsonify({'message': 'Check-in created', 'checkin': checkin.to_dict()}), 201
 
-
-
 # ============= WORKOUTS ROUTES =============
-
-
-
 @app.route('/api/workouts', methods=['GET', 'POST'])
 @jwt_required()
 def workouts():
@@ -284,8 +241,6 @@ def workouts():
         
         return jsonify({'message': 'Workout logged', 'workout': workout.to_dict()}), 201
 
-
-
 @app.route('/api/workouts/<int:workout_id>', methods=['GET', 'PUT', 'DELETE'])
 @jwt_required()
 def workout_detail(workout_id):
@@ -306,8 +261,10 @@ def workout_detail(workout_id):
         workout.reps = data.get('reps', workout.reps)
         workout.weight = data.get('weight', workout.weight)
         workout.notes = data.get('notes', workout.notes)
+        
         if data.get('date'):
             workout.date = date.fromisoformat(data['date'])
+        
         db.session.commit()
         return jsonify({'message': 'Workout updated', 'workout': workout.to_dict()}), 200
     
@@ -316,12 +273,7 @@ def workout_detail(workout_id):
         db.session.commit()
         return jsonify({'message': 'Workout deleted'}), 200
 
-
-
 # ============= STATS/DASHBOARD =============
-
-
-
 @app.route('/api/stats/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard_stats():
@@ -360,11 +312,6 @@ def dashboard_stats():
         'muscle_group_stats': [{'muscle_group': m[0], 'count': m[1]} for m in muscle_stats]
     }), 200
 
-
-
 # ============= RUN =============
-
-
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
