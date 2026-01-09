@@ -28,7 +28,7 @@ const Habits = () => {
       for (const habit of habitsData) {
         try {
           const checkinResponse = await fetch(
-            `http://localhost:5000/api/habits/${habit.id}/checkins`,
+            `https://habit-tracker-v75t.onrender.com/api/habits/${habit.id}/checkins`,
             {
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
