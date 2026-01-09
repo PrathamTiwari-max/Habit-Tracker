@@ -16,7 +16,7 @@ const Dashboard = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/stats/dashboard', {
+      fetch('https://habit-tracker-v75t.onrender.com/api/stats/dashboard', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
